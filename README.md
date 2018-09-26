@@ -10,4 +10,4 @@ Includes `mpc.c` and `mpc.h` from the [`mpc`](https://github.com/orangeduck/mpc)
 
 # Usage
 
-`cc --std=c99 -Wall parsing.c mpc.c -lreadline -lm -o parsing && ./parsing`
+`cc --std=c99 -Wall blisp.c mpc.c -lreadline -lm -o blisp && ./blisp`

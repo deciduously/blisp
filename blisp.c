@@ -8,6 +8,8 @@
 #ifdef _WIN32
 #include <string.h>
 
+static char buffer[2048];
+
 /* Fake readline function */
 char* readline(char* prompt) {
   fputs(prompt, stdout);
@@ -139,8 +141,7 @@ lval* lval_read_num(mpc_ast_t* t) {
 
 /* add an element to a sexp */
 /* the book does this a constantly resizing array */
-/* TODO come back and reimplement as a cons cell */
-/* see if you can linked list it up */
+/* NOTE - this is NOT a cons cell like a Lisp usually uses */
 lval* lval_add(lval* v, lval* x) {
   v->count++;
   v->cell = realloc(v->cell, sizeof(lval*) * v->count);
@@ -156,8 +157,8 @@ lval* lval_read(mpc_ast_t* t) {
   /* if root (>) or sexpr or qexpr then first create empty list */
   lval* x = NULL;
   if (strcmp(t->tag, ">") == 0) { x = lval_sexpr(); }
-  if (strcmp(t->tag, "sexpr")) { x = lval_sexpr(); }
-  if (strcmp(t->tag, "qexpr")) { x = lval_qexpr(); }
+  if (strstr(t->tag, "sexpr")) { x = lval_sexpr(); }
+  if (strstr(t->tag, "qexpr")) { x = lval_qexpr(); }
 
   /* Fill the list with any valid expression therein */
   for (int i = 0; i < t->children_num; i++) {
@@ -200,11 +201,11 @@ lval* lval_take(lval* v, int i) {
 
 lval* builtin_head(lval* a) {
   /* Check for error conditions */
-  LASSERT(a, a->count != 1, "Function 'head' passed too many args!");
+  LASSERT(a, a->count == 1, "Function 'head' passed too many args!");
 
-  LASSERT(a, a->cell[0]->type != LVAL_QEXPR, "Function 'head' passed incorrect types!");
+  LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'head' passed incorrect types!");
 
-  LASSERT(a, a->cell[0]->count == 0, "Can't take the head of {}!");
+  LASSERT(a, a->cell[0]->count != 0, "Can't take the head of {}!");
 
   /* If no error, take the first arg */
   lval* v = lval_take(a, 0);
@@ -215,13 +216,13 @@ lval* builtin_head(lval* a) {
 
 lval* builtin_tail(lval* a) {
   /* Check for error conditions */
-  LASSERT(a, a->count != 1,
+  LASSERT(a, a->count == 1,
     "Function 'head' passed too many args!");
 
-  LASSERT(a, a->cell[0]->type != LVAL_QEXPR,
+  LASSERT(a, a->cell[0]->type == LVAL_QEXPR,
     "Function 'head' passed incorrect types!");
 
-  LASSERT(a, a->cell[0]->count == 0,
+  LASSERT(a, a->cell[0]->count != 0,
     "Can't take the head of {}!");
 
   /* If no error, take the first arg */
