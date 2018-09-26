@@ -162,13 +162,11 @@ lval* lval_read(mpc_ast_t* t) {
   /* Fill the list with any valid expression therein */
   for (int i = 0; i < t->children_num; i++) {
     /* First, skip the junk */
-    if (strcmp(t->children[i]->contents, "(") == 0 ||
-        strcmp(t->children[i]->contents, ")") == 0 ||
-        strcmp(t->children[i]->contents, "{") == 0 ||
-        strcmp(t->children[i]->contents, "}") == 0 ||
-        strcmp(t->children[i]->tag, "regex") == 0) {
-      continue;
-    }
+    if (strcmp(t->children[i]->contents, "(") == 0) { continue; }
+    if (strcmp(t->children[i]->contents, ")") == 0) { continue; }
+    if (strcmp(t->children[i]->contents, "{") == 0) { continue; }
+    if (strcmp(t->children[i]->contents, "}") == 0) { continue; }
+    if (strcmp(t->children[i]->tag, "regex") == 0) { continue; }
 
     x = lval_add(x, lval_read(t->children[i]));
   }
@@ -408,13 +406,13 @@ int main(int argc, char** argv) {
     /* Define them with the following Language */
     mpca_lang(MPCA_LANG_DEFAULT,
     "                                                                            \
-        number   : /-?[0-9.]+/ ;                                                 \
+        number   : /-?[0-9]+/ ;                                                 \
         symbol   : '+' | '-' | '*' | '/' | '^' | '%'                             \
                  | \"add\" | \"sub\" | \"mul\" | \"div\" | \"min\" | \"max\"     \
                  | \"list\" | \"head\" | \"tail\" | \"join\" | \"eval\"     ;    \
         sexpr    : '(' <expr>* ')' ;                                             \
-        qexpr     : '{' <expr>* '}' ;                                            \
-        expr    : <number> | <symbol> | <sexpr> | <qexpr> ;                      \
+        qexpr    : '{' <expr>* '}' ;                                             \
+        expr     : <number> | <symbol> | <sexpr> | <qexpr> ;                     \
         blisp    : /^/ <expr>* /$/ ;                                             \
     ",
         Number, Symbol, Sexpr, Qexpr, Expr, Blisp);
