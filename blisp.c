@@ -34,6 +34,15 @@ void add_history(char* unused) {}
 #define LASSERT(args, cond, err) \
   if (!(cond)) { lval_del(args); return lval_err(err); }
 
+#define LASSERT_ARG_NUM(args, num) \
+  LASSERT(args, args->count <= num, "Function passed too many args!");
+
+#define LASSERT_EMPTY_LIST(args) \
+  LASSERT(args, args->cell[0]->count != 0, "Function called on empty list")
+
+#define LASSERT_TYPE(args, expected) \
+  LASSERT(args, args->cell[0]->type == expected, "Function called with incorrect type")
+
 /* TYPES */
 
 typedef struct lval {
@@ -201,11 +210,9 @@ lval* lval_take(lval* v, int i) {
 
 lval* builtin_head(lval* a) {
   /* Check for error conditions */
-  LASSERT(a, a->count == 1, "Function 'head' passed too many args!");
-
-  LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'head' passed incorrect types!");
-
-  LASSERT(a, a->cell[0]->count != 0, "Can't take the head of {}!");
+  LASSERT_ARG_NUM(a, 1);
+  LASSERT_TYPE(a, LVAL_QEXPR);
+  LASSERT_EMPTY_LIST(a);
 
   /* If no error, take the first arg */
   lval* v = lval_take(a, 0);
@@ -216,14 +223,9 @@ lval* builtin_head(lval* a) {
 
 lval* builtin_tail(lval* a) {
   /* Check for error conditions */
-  LASSERT(a, a->count == 1,
-    "Function 'head' passed too many args!");
-
-  LASSERT(a, a->cell[0]->type == LVAL_QEXPR,
-    "Function 'head' passed incorrect types!");
-
-  LASSERT(a, a->cell[0]->count != 0,
-    "Can't take the head of {}!");
+  LASSERT_ARG_NUM(a, 1);
+  LASSERT_TYPE(a, LVAL_QEXPR);
+  LASSERT_EMPTY_LIST(a);
 
   /* If no error, take the first arg */
   lval* v = lval_take(a, 0);
@@ -240,10 +242,8 @@ lval* builtin_list(lval* a) {
 }
 
 lval* builtin_eval(lval* a) {
-  LASSERT(a, a->count == 1,
-    "Function 'eval' passed too many arguments!");
-  LASSERT(a, a->cell[0]->type == LVAL_QEXPR,
-    "Function 'eval' passed incorrect type!");
+  LASSERT_ARG_NUM(a, 1);
+  LASSERT_TYPE(a, LVAL_QEXPR);
 
   lval* x = lval_take(a, 0);
   x->type = LVAL_SEXPR;
