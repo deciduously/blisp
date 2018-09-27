@@ -263,7 +263,7 @@ lval* lval_join(lval* x, lval* y) {
 
 lval* builtin_join(lval* a) {
   for (int i = 0; i < a->count; i++) {
-    LASSERT(a, a->cell[i]->type == LVAL_QEXPR, "Function 'join' passed incorrect type");
+    LASSERT_TYPE(a, LVAL_QEXPR);
   }
 
   lval* x = lval_pop(a, 0);
@@ -274,6 +274,18 @@ lval* builtin_join(lval* a) {
 
   lval_del(a);
   return x;
+}
+
+lval* builtin_len(lval* a) {
+  /* This is not quite it */
+  /* You need to ensure it's called on a Qexpr */
+  LASSERT_ARG_NUM(a, 1);
+  LASSERT_TYPE(a, LVAL_QEXPR);
+
+  lval* v = lval_take(a, 0);
+  int cnt = v->count;
+  lval_del(v);
+  return lval_num(cnt);
 }
 
 lval* builtin_op(lval* a, char* op) {
@@ -322,6 +334,7 @@ lval* builtin(lval* a, char* func) {
   if (strcmp("head", func) == 0) { return builtin_head(a); }
   if (strcmp("tail", func) == 0) { return builtin_tail(a); }
   if (strcmp("join", func) == 0) { return builtin_join(a); }
+  if (strcmp("len", func) == 0) { return builtin_len(a); }
   if (strcmp("eval", func) == 0) { return builtin_eval(a); }
   if (strstr("+-/*%^maxminaddsubmuldiv", func)) { return builtin_op(a, func); }
   lval_del(a);
@@ -410,7 +423,7 @@ int main(int argc, char** argv) {
         number   : /-?[0-9]+/ ;                                                 \
         symbol   : '+' | '-' | '*' | '/' | '^' | '%'                             \
                  | \"add\" | \"sub\" | \"mul\" | \"div\" | \"min\" | \"max\"     \
-                 | \"list\" | \"head\" | \"tail\" | \"join\" | \"eval\"     ;    \
+                 | \"list\" | \"head\" | \"tail\" | \"join\" | \"eval\" | \"len\" ;    \
         sexpr    : '(' <expr>* ')' ;                                             \
         qexpr    : '{' <expr>* '}' ;                                             \
         expr     : <number> | <symbol> | <sexpr> | <qexpr> ;                     \
