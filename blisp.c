@@ -111,6 +111,35 @@ lval* lval_qexpr(void) {
   return v;
 }
 
+/* PRINT */
+
+void lval_print(lval* v); 
+
+void lval_expr_print(lval* v, char open, char close) {
+  putchar(open);
+  for (int i = 0; i < v->count; i++) {
+    lval_print(v->cell[i]);
+    if (i != (v->count-1)) {
+      putchar(' ');
+    }
+  }
+
+  putchar(close);
+}
+
+void lval_print(lval* v) {
+  switch (v->type) {
+    case LVAL_NUM:   printf("%li", v->num); break;
+    case LVAL_ERR:   printf("Error: %s", v->err); break;
+    case LVAL_SYM:   printf("%s", v->sym); break;
+    case LVAL_SEXPR: lval_expr_print(v, '(', ')'); break;
+    case LVAL_QEXPR: lval_expr_print(v, '{', '}'); break;
+  }
+}
+
+/* Print an "lval" followed by a newline */
+void lval_println(lval* v) { lval_print(v); putchar('\n'); }
+
 /* lval type Destructor */
 /* no fancy Rust Drop semantics :( */
 void lval_del(lval* v) {
@@ -303,6 +332,24 @@ lval* builtin_init(lval* a) {
   return v;
 }
 
+lval* builtin_cons(lval* a) {
+  LASSERT_ARG_NUM(a, 2);
+  /* TODO: assert types? */
+  
+  /* get first val and second qexpr */
+  lval *v = lval_pop(a, 0);
+  lval* q = lval_pop(a, 0);
+  /* create a new qexpr */
+  lval *ret = lval_qexpr();
+
+  /* add the value and then join it with the list */
+  lval_add(ret, v);
+  lval_join(ret, q);
+  
+  lval_del(a);
+  return ret;
+}
+
 lval* builtin_op(lval* a, char* op) {
   /* Ensure all args are numbers */
   for (int i = 0; i < a->count; i++) {
@@ -352,6 +399,7 @@ lval* builtin(lval* a, char* func) {
   if (strcmp("len", func) == 0) { return builtin_len(a); }
   if (strcmp("eval", func) == 0) { return builtin_eval(a); }
   if (strcmp("init", func) == 0) { return builtin_init(a); }
+  if (strcmp("cons", func) == 0) { return builtin_cons(a); }
   if (strstr("+-/*%^maxminaddsubmuldiv", func)) { return builtin_op(a, func); }
   lval_del(a);
   return lval_err("Unknown Function!");
@@ -392,35 +440,6 @@ lval* lval_eval(lval* v) {
   /* otherwise there's nothing to do! */
   return v;
 }
-
-/* PRINT */
-
-void lval_print(lval* v); 
-
-void lval_expr_print(lval* v, char open, char close) {
-  putchar(open);
-  for (int i = 0; i < v->count; i++) {
-    lval_print(v->cell[i]);
-    if (i != (v->count-1)) {
-      putchar(' ');
-    }
-  }
-
-  putchar(close);
-}
-
-void lval_print(lval* v) {
-  switch (v->type) {
-    case LVAL_NUM:   printf("%li", v->num); break;
-    case LVAL_ERR:   printf("Error: %s", v->err); break;
-    case LVAL_SYM:   printf("%s", v->sym); break;
-    case LVAL_SEXPR: lval_expr_print(v, '(', ')'); break;
-    case LVAL_QEXPR: lval_expr_print(v, '{', '}'); break;
-  }
-}
-
-/* Print an "lval" followed by a newline */
-void lval_println(lval* v) { lval_print(v); putchar('\n'); }
 
 /* LOOP */
 
