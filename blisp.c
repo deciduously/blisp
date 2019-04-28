@@ -55,7 +55,7 @@ typedef struct lval {
   char* sym;
   /* if LVAL_SEXPR */
   int count;
-  struct lval** cell; /* This is what you don't know how to do in safe Rust - it contains a reference to itself */
+  struct lval** cell;
 } lval;
 
 /* lval variants */
@@ -199,7 +199,7 @@ lval* lval_pop(lval* v, int i) {
   return x;
 }
 
-/* wrapper arround lval_pop that includes the destructor */
+/* wrapper around lval_pop that includes the destructor */
 lval* lval_take(lval* v, int i) {
   lval* x = lval_pop(v, i);
   lval_del(v);
@@ -207,6 +207,8 @@ lval* lval_take(lval* v, int i) {
 }
 
 /* BUILTINS */
+
+
 
 lval* builtin_head(lval* a) {
   /* Check for error conditions */
@@ -288,6 +290,19 @@ lval* builtin_len(lval* a) {
   return lval_num(cnt);
 }
 
+lval* builtin_init(lval* a) {
+  LASSERT_ARG_NUM(a, 1);
+  LASSERT_TYPE(a, LVAL_QEXPR);
+  LASSERT_EMPTY_LIST(a);
+
+  /* if no error, take the first arg */
+  lval* v = lval_take(a, 0);
+
+  // delete the last element of v
+  lval_del(lval_pop(v, v->count-1));
+  return v;
+}
+
 lval* builtin_op(lval* a, char* op) {
   /* Ensure all args are numbers */
   for (int i = 0; i < a->count; i++) {
@@ -336,6 +351,7 @@ lval* builtin(lval* a, char* func) {
   if (strcmp("join", func) == 0) { return builtin_join(a); }
   if (strcmp("len", func) == 0) { return builtin_len(a); }
   if (strcmp("eval", func) == 0) { return builtin_eval(a); }
+  if (strcmp("init", func) == 0) { return builtin_init(a); }
   if (strstr("+-/*%^maxminaddsubmuldiv", func)) { return builtin_op(a, func); }
   lval_del(a);
   return lval_err("Unknown Function!");
@@ -421,9 +437,7 @@ int main(int argc, char** argv) {
     mpca_lang(MPCA_LANG_DEFAULT,
     "                                                                            \
         number   : /-?[0-9]+/ ;                                                 \
-        symbol   : '+' | '-' | '*' | '/' | '^' | '%'                             \
-                 | \"add\" | \"sub\" | \"mul\" | \"div\" | \"min\" | \"max\"     \
-                 | \"list\" | \"head\" | \"tail\" | \"join\" | \"eval\" | \"len\" ;    \
+        symbol   : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/ ;                           \
         sexpr    : '(' <expr>* ')' ;                                             \
         qexpr    : '{' <expr>* '}' ;                                             \
         expr     : <number> | <symbol> | <sexpr> | <qexpr> ;                     \
