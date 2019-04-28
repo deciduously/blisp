@@ -149,7 +149,7 @@ lval* lval_read_num(mpc_ast_t* t) {
 }
 
 /* add an element to a sexp */
-/* the book does this a constantly resizing array */
+/* the book does this as a constantly resizing array */
 /* NOTE - this is NOT a cons cell like a Lisp usually uses */
 lval* lval_add(lval* v, lval* x) {
   v->count++;
